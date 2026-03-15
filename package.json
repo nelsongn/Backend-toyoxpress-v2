@@ -2,7 +2,10 @@
   "name": "backend-toyoxpress-v2",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "nodemon --exec tsx src/index.ts",
     "build": "tsc",
