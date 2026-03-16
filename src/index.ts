@@ -24,6 +24,7 @@ import mongoose from 'mongoose';
 import { createServer } from 'http';
 import { Server } from 'socket.io'; // V2 Centralized WebSockets
 import winston from 'winston';
+import 'winston-daily-rotate-file';
 import dns from 'dns';
 import { SyncJob } from './models/SyncJob';
 
@@ -63,7 +64,12 @@ export const logger = winston.createLogger({
         new winston.transports.Console({
             format: winston.format.simple(),
         }),
-        new winston.transports.File({ filename: 'app.log' })
+        new winston.transports.DailyRotateFile({
+            filename: 'logs/app-%DATE%.log',
+            datePattern: 'YYYY-MM-DD',
+            maxFiles: '2d',
+            zippedArchive: true,
+        })
     ],
 });
 

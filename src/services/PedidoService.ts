@@ -267,7 +267,7 @@ async function enviarEmails(pdfBuffer: Buffer, correlativo: number, clienteNombr
     const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155; max-width: 600px; margin: 0 auto; padding: 24px;">
         <div style="text-align: center; margin-bottom: 32px;">
-            <img src="cid:toyoxpress-logo" alt="ToyoXpress" style="max-height: 48px; width: auto;">
+            <img src="https://toyoxpress.com/wp-content/uploads/2017/07/Ai-LOGO-TOYOXPRESS.png" alt="ToyoXpress" style="max-height: 48px; width: auto;">
         </div>
         <p style="font-size: 15px; margin-bottom: 16px;">Hola,</p>
         <p style="font-size: 15px; line-height: 1.5; margin-bottom: 24px;">
