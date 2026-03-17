@@ -42,6 +42,7 @@ dns.lookup('smtp-relay.brevo.com', (err, address, family) => {
 });
 
 const app = express();
+app.set('trust proxy', 1); // Confía en el primer proxy (el WAF/CDN de Hostinger)
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 4000;
 
@@ -49,8 +50,13 @@ const PORT = process.env.PORT || 4000;
 export const io = new Server(httpServer, {
     cors: {
         origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        methods: ['GET', 'POST'], // Solo GET y POST son necesarios para el handshake inicial
+        credentials: true
     },
+    transports: ['websocket'], // 🚀 CRUCIAL: Desactiva polling para evitar spam de peticiones HTTP
+    allowEIO3: false,
+    pingTimeout: 60000, // Aumenta el tiempo de espera
+    pingInterval: 25000  // Intervalo entre pings
 });
 
 // Logger Setup
@@ -76,9 +82,12 @@ export const logger = winston.createLogger({
 
 // Global Middlewares
 app.use(express.json({ limit: '10mb' }));
+// Global Middlewares
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Request Logger (Diagnostics)
