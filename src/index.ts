@@ -1,5 +1,24 @@
 import fs from 'fs';
 import path from 'path';
+
+// 🔥 TRAMPA SÍNCRONA DE ERRORES FATALES 🔥
+const crashLogPath = path.join(__dirname, '../crash.log');
+
+// Escribe esto al instante apenas el archivo es leído
+fs.writeFileSync(crashLogPath, `\n--- [${new Date().toISOString()}] INTENTO DE ARRANQUE ---\n`, { flag: 'a' });
+
+// Atrapa cualquier error que mate la app y lo escribe a la fuerza
+process.on('uncaughtException', (err) => {
+    console.error('💥 ERROR FATAL (Exception):', err);
+    fs.writeFileSync(crashLogPath, `💥 ERROR FATAL (Exception): ${err.message}\n${err.stack}\n`, { flag: 'a' });
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('💥 ERROR FATAL (Rejection):', reason);
+    fs.writeFileSync(crashLogPath, `💥 ERROR FATAL (Rejection): ${reason}\n`, { flag: 'a' });
+});
+
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -11,13 +30,9 @@ import 'winston-daily-rotate-file';
 import dns from 'dns';
 import { SyncJob } from './models/SyncJob';
 
-// Load environment variables immediately
 dotenv.config();
 
-// 🔥 TRAMPA SÍNCRONA DE ERRORES FATALES 🔥
-const crashLogPath = path.join(__dirname, '../crash.log');
-
-// Logger Setup (Initialized EARLY to prevent ReferenceErrors)
+// Logger Setup (MUST BE BEFORE DNS LOOKUPS)
 export const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
@@ -35,22 +50,6 @@ export const logger = winston.createLogger({
             zippedArchive: true,
         })
     ],
-});
-
-// Escribe esto al instante apenas el archivo es leído
-fs.writeFileSync(crashLogPath, `\n--- [${new Date().toISOString()}] INTENTO DE ARRANQUE ---\n`, { flag: 'a' });
-
-// Atrapa cualquier error que mate la app y lo escribe a la fuerza
-process.on('uncaughtException', (err) => {
-    console.error('💥 ERROR FATAL (Exception):', err);
-    fs.writeFileSync(crashLogPath, `💥 ERROR FATAL (Exception): ${err.message}\n${err.stack}\n`, { flag: 'a' });
-    process.exit(1);
-});
-
-process.on('unhandledRejection', (reason) => {
-    console.error('💥 ERROR FATAL (Rejection):', reason);
-    fs.writeFileSync(crashLogPath, `💥 ERROR FATAL (Rejection): ${reason}\n`, { flag: 'a' });
-    process.exit(1);
 });
 
 // DNS Debugging for Hostinger
@@ -82,8 +81,11 @@ export const io = new Server(httpServer, {
     pingInterval: 25000  // Intervalo entre pings
 });
 
+
+
 // Global Middlewares
 app.use(express.json({ limit: '10mb' }));
+// Global Middlewares
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -91,24 +93,28 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Request Logger (Diagnostics) with Status and Timing
+// Exponer la carpeta assets de forma estática
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
+
+// Request Logger (Diagnostics)
+app.use((req, res, next) => {
+    logger.info(`[${req.method}] ${req.originalUrl} - IP: ${req.ip}`);
+    next();
+});
+
+// Performance Logger Middleware
 app.use((req, res, next) => {
     const start = process.hrtime.bigint();
     res.on('finish', () => {
         const end = process.hrtime.bigint();
         const ms = Number(end - start) / 1e6;
-        const logMessage = `[${req.method}] ${req.originalUrl} - Status: ${res.statusCode} - IP: ${req.ip} - ${ms.toFixed(3)}ms`;
-
-        if (res.statusCode >= 500) {
-            logger.error(logMessage);
-        } else if (res.statusCode >= 400) {
-            logger.warn(logMessage);
-        } else {
-            logger.info(logMessage);
+        if (ms > 300) {
+            logger.warn(`[SLOW] ${req.method} ${req.originalUrl} - ${ms.toFixed(2)}ms`);
         }
     });
     next();
 });
+
 
 
 import movimientoRoutes from './routes/movimientos';
@@ -145,21 +151,6 @@ app.get('/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', message: 'ToyoXpress API V2 Running' });
 });
 
-// Serve logo from assets (resilient path check)
-app.get('/api/logo', (req: Request, res: Response) => {
-    const paths = [
-        path.join(__dirname, 'assets/toyoxpress-logo.png'),
-        path.join(__dirname, '../src/assets/toyoxpress-logo.png'),
-        '/Users/MiguelMedina/Desktop/Miguel/toyoxpress/Backend-toyoxpress-v2/src/assets/toyoxpress-logo.png'
-    ];
-
-    for (const p of paths) {
-        if (fs.existsSync(p)) {
-            return res.sendFile(p);
-        }
-    }
-    res.status(404).send('Logo not found');
-});
 
 // Websocket Events
 io.on('connection', async (socket) => {
