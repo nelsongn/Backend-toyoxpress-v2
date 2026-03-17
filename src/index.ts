@@ -132,6 +132,22 @@ app.get('/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', message: 'ToyoXpress API V2 Running' });
 });
 
+// Serve logo from assets (resilient path check)
+app.get('/api/logo', (req: Request, res: Response) => {
+    const paths = [
+        path.join(__dirname, 'assets/toyoxpress-logo.png'),
+        path.join(__dirname, '../src/assets/toyoxpress-logo.png'),
+        '/Users/MiguelMedina/Desktop/Miguel/toyoxpress/Backend-toyoxpress-v2/src/assets/toyoxpress-logo.png'
+    ];
+
+    for (const p of paths) {
+        if (fs.existsSync(p)) {
+            return res.sendFile(p);
+        }
+    }
+    res.status(404).send('Logo not found');
+});
+
 // Websocket Events
 io.on('connection', async (socket) => {
     logger.info(`Client connected: ${socket.id}`);

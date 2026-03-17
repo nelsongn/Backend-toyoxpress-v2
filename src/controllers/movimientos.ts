@@ -30,6 +30,8 @@ export const createMovimiento = async (req: Request, res: Response): Promise<voi
         const padId = String(newId).padStart(4, '0');
         const identificador = `${movimiento === 'egreso' ? 'E' : 'I'}-${padId}`;
 
+        const isCajaChica = cuenta === 'CajaChica';
+
         const newMovimiento = new Movimiento({
             id: newId,
             id_usuario,
@@ -48,6 +50,8 @@ export const createMovimiento = async (req: Request, res: Response): Promise<voi
             identificador,
             fechaString,
             fecha: fechaString ? new Date(fechaString + "T12:00:00Z") : undefined,
+            status: isCajaChica ? 'aprobado' : 'pendiente',
+            vale: isCajaChica ? identificador : undefined,
             disabled: false
         });
 
@@ -120,9 +124,19 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
         if (req.query.status && req.query.status !== 'todos') {
             const statusVal = req.query.status as string;
             if (statusVal === 'verificados' || statusVal === 'Aprove') {
-                andConditions.push({ vale: { $exists: true, $nin: ["", null] } });
+                andConditions.push({ 
+                    $or: [
+                        { vale: { $exists: true, $nin: ["", null] } },
+                        { cuenta: 'CajaChica' }
+                    ]
+                });
             } else if (statusVal === 'no_verificados' || statusVal === 'Unverified') {
-                andConditions.push({ $or: [{ vale: "" }, { vale: { $exists: false } }, { vale: null }] });
+                andConditions.push({ 
+                    $and: [
+                        { $or: [{ vale: "" }, { vale: { $exists: false } }, { vale: null }] },
+                        { cuenta: { $ne: 'CajaChica' } }
+                    ]
+                });
             }
         }
 
