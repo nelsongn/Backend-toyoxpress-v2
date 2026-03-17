@@ -137,6 +137,10 @@ app.use('/api/configuracion', configuracionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 // Hello World Route
+app.get('/', (req: Request, res: Response) => {
+    res.status(200).json({ status: 'ok', message: 'ToyoXpress API V2 is active', version: '2.0.0' });
+});
+
 app.get('/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', message: 'ToyoXpress API V2 Running' });
 });
