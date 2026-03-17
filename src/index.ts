@@ -1,22 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-
-// 🔥 TRAMPA SÍNCRONA DE ERRORES FATALES 🔥
-const crashLogPath = path.join(__dirname, '../crash.log');
-
-// Escribe esto al instante apenas el archivo es leído
-fs.writeFileSync(crashLogPath, `\n--- [${new Date().toISOString()}] INTENTO DE ARRANQUE ---\n`, { flag: 'a' });
-
-// Atrapa cualquier error que mate la app y lo escribe a la fuerza
-process.on('uncaughtException', (err) => {
-    fs.writeFileSync(crashLogPath, `💥 ERROR FATAL (Exception): ${err.message}\n${err.stack}\n`, { flag: 'a' });
-    process.exit(1); // Deja que muera, pero ya tenemos el log
-});
-
-process.on('unhandledRejection', (reason) => {
-    fs.writeFileSync(crashLogPath, `💥 ERROR FATAL (Rejection): ${reason}\n`, { flag: 'a' });
-});
-
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -28,7 +11,47 @@ import 'winston-daily-rotate-file';
 import dns from 'dns';
 import { SyncJob } from './models/SyncJob';
 
+// Load environment variables immediately
 dotenv.config();
+
+// 🔥 TRAMPA SÍNCRONA DE ERRORES FATALES 🔥
+const crashLogPath = path.join(__dirname, '../crash.log');
+
+// Logger Setup (Initialized EARLY to prevent ReferenceErrors)
+export const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json()
+    ),
+    transports: [
+        new winston.transports.Console({
+            format: winston.format.simple(),
+        }),
+        new winston.transports.DailyRotateFile({
+            filename: 'logs/app-%DATE%.log',
+            datePattern: 'YYYY-MM-DD',
+            maxFiles: '2d',
+            zippedArchive: true,
+        })
+    ],
+});
+
+// Escribe esto al instante apenas el archivo es leído
+fs.writeFileSync(crashLogPath, `\n--- [${new Date().toISOString()}] INTENTO DE ARRANQUE ---\n`, { flag: 'a' });
+
+// Atrapa cualquier error que mate la app y lo escribe a la fuerza
+process.on('uncaughtException', (err) => {
+    console.error('💥 ERROR FATAL (Exception):', err);
+    fs.writeFileSync(crashLogPath, `💥 ERROR FATAL (Exception): ${err.message}\n${err.stack}\n`, { flag: 'a' });
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('💥 ERROR FATAL (Rejection):', reason);
+    fs.writeFileSync(crashLogPath, `💥 ERROR FATAL (Rejection): ${reason}\n`, { flag: 'a' });
+    process.exit(1);
+});
 
 // DNS Debugging for Hostinger
 dns.lookup('google.com', (err, address, family) => {
@@ -59,30 +82,8 @@ export const io = new Server(httpServer, {
     pingInterval: 25000  // Intervalo entre pings
 });
 
-// Logger Setup
-export const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console({
-            format: winston.format.simple(),
-        }),
-        new winston.transports.DailyRotateFile({
-            filename: 'logs/app-%DATE%.log',
-            datePattern: 'YYYY-MM-DD',
-            maxFiles: '2d',
-            zippedArchive: true,
-        })
-    ],
-});
-
-
 // Global Middlewares
 app.use(express.json({ limit: '10mb' }));
-// Global Middlewares
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -90,25 +91,24 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Request Logger (Diagnostics)
-app.use((req, res, next) => {
-    logger.info(`[${req.method}] ${req.originalUrl} - IP: ${req.ip}`);
-    next();
-});
-
-// Performance Logger Middleware
+// Request Logger (Diagnostics) with Status and Timing
 app.use((req, res, next) => {
     const start = process.hrtime.bigint();
     res.on('finish', () => {
         const end = process.hrtime.bigint();
         const ms = Number(end - start) / 1e6;
-        if (ms > 300) {
-            logger.warn(`[SLOW] ${req.method} ${req.originalUrl} - ${ms.toFixed(2)}ms`);
+        const logMessage = `[${req.method}] ${req.originalUrl} - Status: ${res.statusCode} - IP: ${req.ip} - ${ms.toFixed(3)}ms`;
+
+        if (res.statusCode >= 500) {
+            logger.error(logMessage);
+        } else if (res.statusCode >= 400) {
+            logger.warn(logMessage);
+        } else {
+            logger.info(logMessage);
         }
     });
     next();
 });
-
 
 
 import movimientoRoutes from './routes/movimientos';
