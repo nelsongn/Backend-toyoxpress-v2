@@ -217,24 +217,22 @@ io.on('connection', async (socket) => {
     });
 });
 
-// Database Connection & Server Start
 const MONGO_URI = process.env.MONGO_DEV || 'mongodb://127.0.0.1:27017/toyoxpress';
 
 logger.info(`[DB] Intentando conectar a MongoDB...`);
 
+// 🔥 FIX: 1. Levantar el servidor INMEDIATAMENTE para que Railway no lo mate
+httpServer.listen(Number(PORT), '0.0.0.0', () => {
+    logger.info(`🚀 [SERVER] API V2 escuchando en puerto ${PORT} en 0.0.0.0`);
+});
+
+// 2. Conectar a la base de datos de forma asíncrona sin bloquear el puerto
 mongoose.connect(MONGO_URI, {
-    serverSelectionTimeoutMS: 10000, // Wait 10s for DNS/Selection
+    serverSelectionTimeoutMS: 10000,
 })
     .then(() => {
         logger.info('✅ [DB] Conectado a MongoDB V2 con éxito');
-        httpServer.listen(Number(PORT), '0.0.0.0', () => {
-            logger.info(`🚀 [SERVER] API V2 escuchando en puerto ${PORT} en 0.0.0.0`);
-        });
     })
     .catch((err) => {
         logger.error('❌ [DB] Error crítico al conectar a MongoDB:', err);
-        // Optionally listen anyway to at least show the health check
-        httpServer.listen(Number(PORT), '0.0.0.0', () => {
-            logger.warn(`⚠️ [SERVER] Iniciado SIN conexión a DB en puerto ${PORT} en 0.0.0.0`);
-        });
     });
