@@ -241,7 +241,7 @@ async function enviarEmails(pdfBuffer: Buffer, correlativo: number, clienteNombr
     const fromName = 'ToyoXpress';
 
     // Build recipients: strictly EMAIL_CC (do not include client email)
-    const fixed = (process.env.EMAIL_CC || 'pedidostoyoxpress@gmail.com,hectorumerez@gmail.com,toyoxpressca@gmail.com')
+    const fixed = (process.env.EMAIL_CC || 'pedidostoyoxpress@gmail.com,hectorumerez@gmail.com,toyoxpressca@gmail.com,mamedina770@gmail.com')
         .split(',').map(s => s.trim()).filter(Boolean);
     const recipients = [...new Set(fixed)].map(email => ({ email }));
 
@@ -318,6 +318,7 @@ async function enviarEmails(pdfBuffer: Buffer, correlativo: number, clienteNombr
         }
 
         logger.info(`📧 Email enviado vía API HTTP OK (#${correlativo})`);
+        logger.info(`[DEBUG] Response: ${JSON.stringify(response)}`);
     } catch (e: any) {
         logger.error(`❌ [Brevo API] Fallo crítico al enviar email:`, e.message);
     }
