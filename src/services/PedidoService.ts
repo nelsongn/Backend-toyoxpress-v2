@@ -224,6 +224,14 @@ function generarPDFBuffer(
 
 async function enviarEmails(pdfBuffer: Buffer, correlativo: number, clienteNombre: string, notaPedido: string, logoBuffer: Buffer | null) {
     const apiKey = process.env.BREVO_API_KEY;
+    
+    // Debug logger for API Key (not exposing full key)
+    if (!apiKey) {
+        logger.error('❌ [DEBUG] BREVO_API_KEY no detectada en environment variables.');
+    } else {
+        logger.info(`🔍 [DEBUG] BREVO_API_KEY detectada: ${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}`);
+    }
+
     if (!apiKey) {
         logger.warn('⚠️  BREVO_API_KEY no configurado — email omitido.');
         return;
