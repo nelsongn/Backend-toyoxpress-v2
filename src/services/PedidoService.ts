@@ -228,14 +228,18 @@ async function enviarEmails(pdfBuffer: Buffer, correlativo: number, clienteNombr
     // Debug logger for API Key (not exposing full key)
     if (!apiKey) {
         logger.error('❌ [DEBUG] BREVO_API_KEY no detectada en environment variables.');
+        return;
     } else {
         logger.info(`🔍 [DEBUG] BREVO_API_KEY detectada: ${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}`);
     }
 
-    if (!apiKey) {
-        logger.warn('⚠️  BREVO_API_KEY no configurado — email omitido.');
-        return;
-    }
+    const SibApiV3Sdk = require('sib-api-v3-sdk');
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    const auth = defaultClient.authentications['api-key'];
+    auth.apiKey = apiKey;
+
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
     const fromEmail = process.env.SMTP_FROM || 'contacto@toyoxpress.com';
     const fromName = 'ToyoXpress';
@@ -283,7 +287,7 @@ async function enviarEmails(pdfBuffer: Buffer, correlativo: number, clienteNombr
     </div>
     `;
 
-    const body = {
+    Object.assign(sendSmtpEmail, {
         sender: { name: fromName, email: fromEmail },
         to: recipients,
         subject,
@@ -298,29 +302,14 @@ async function enviarEmails(pdfBuffer: Buffer, correlativo: number, clienteNombr
                 content: pdfBuffer.toString('base64')
             }
         ]
-    };
+    });
 
     try {
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-                'accept': 'application/json',
-                'api-key': apiKey,
-                'content-type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            logger.error(`❌ [Brevo API] Error HTTP ${response.status}:`, JSON.stringify(errorData));
-            return;
-        }
-
-        logger.info(`📧 Email enviado vía API HTTP OK (#${correlativo})`);
-        logger.info(`[DEBUG] Response: ${JSON.stringify(response)}`);
+        const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+        logger.info(`📧 Email enviado vía Brevo SDK OK (#${correlativo})`);
+        logger.info(`[DEBUG] SDK Response: ${JSON.stringify(data)}`);
     } catch (e: any) {
-        logger.error(`❌ [Brevo API] Fallo crítico al enviar email:`, e.message);
+        logger.error(`❌ [Brevo SDK] Fallo crítico al enviar email:`, e.response?.body || e.message);
     }
 }
 
