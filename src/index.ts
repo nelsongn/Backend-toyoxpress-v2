@@ -58,9 +58,9 @@ dns.lookup('google.com', (err, address, family) => {
     else logger.info(`✅ [DNS DEBUG] google.com resolved to: ${address} (IPv${family})`);
 });
 
-dns.lookup('smtp-relay.brevo.com', (err, address, family) => {
-    if (err) logger.error('❌ [DNS DEBUG] Failed to resolve smtp-relay.brevo.com:', err);
-    else logger.info(`✅ [DNS DEBUG] smtp-relay.brevo.com resolved to: ${address} (IPv${family})`);
+dns.lookup('api.brevo.com', (err, address, family) => {
+    if (err) logger.error('❌ [DNS DEBUG] Failed to resolve api.brevo.com:', err);
+    else logger.info(`✅ [DNS DEBUG] api.brevo.com resolved to: ${address} (IPv${family})`);
 });
 
 const app = express();

@@ -1,6 +1,5 @@
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 import WooCommerceRestApi from '@woocommerce/woocommerce-rest-api';
-import nodemailer from 'nodemailer';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
@@ -224,42 +223,21 @@ function generarPDFBuffer(
 // ─── Mailer ───────────────────────────────────────────────────────────────────
 
 async function enviarEmails(pdfBuffer: Buffer, correlativo: number, clienteNombre: string, notaPedido: string, logoBuffer: Buffer | null) {
-    if (!process.env.SMTP_HOST) {
-        logger.warn('⚠️  SMTP no configurado — email omitido.');
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) {
+        logger.warn('⚠️  BREVO_API_KEY no configurado — email omitido.');
         return;
     }
 
-    const from = process.env.SMTP_FROM || process.env.SMTP_USER || '';
-
-    const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-        port: Number(process.env.SMTP_PORT || 587),
-        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for 587
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-        connectionTimeout: 10000, // 10s
-        greetingTimeout: 10000,
-        socketTimeout: 20000,
-        debug: true, // Enable debug in logs
-    });
-
-    // ── Verify SMTP connection & auth ─────────────────────────────────────
-    try {
-        logger.info(`📧 [SMTP] Intentando conectar a ${process.env.SMTP_HOST || 'smtp-relay.brevo.com'}:${process.env.SMTP_PORT || 587}...`);
-        await transporter.verify();
-        logger.info(`✅ [SMTP] Conexión establecida y autenticada correctamente`);
-    } catch (verifyErr: any) {
-        logger.error(`❌ [SMTP] Error de autenticación o conexión: ${verifyErr.message}`);
-        logger.error(`   → Host: ${process.env.SMTP_HOST}, Puerto: ${process.env.SMTP_PORT}, User: ${process.env.SMTP_USER}`);
-        logger.warn('   → TIP: Si el puerto 587 falló, intenta con el 465 y SMTP_SECURE=true en el .env');
-        return;
-    }
+    const fromEmail = process.env.SMTP_FROM || 'contacto@toyoxpress.com';
+    const fromName = 'ToyoXpress';
 
     // Build recipients: strictly EMAIL_CC (do not include client email)
     const fixed = (process.env.EMAIL_CC || 'pedidostoyoxpress@gmail.com,hectorumerez@gmail.com,toyoxpressca@gmail.com')
         .split(',').map(s => s.trim()).filter(Boolean);
-    const all = [...new Set(fixed)];
+    const recipients = [...new Set(fixed)].map(email => ({ email }));
 
-    if (all.length === 0) {
+    if (recipients.length === 0) {
         logger.warn('⚠️  No hay destinatarios EMAIL_CC configurados. Se omite el envío de correo interno.');
         return;
     }
@@ -297,29 +275,43 @@ async function enviarEmails(pdfBuffer: Buffer, correlativo: number, clienteNombr
     </div>
     `;
 
-    for (const to of all) {
-        try {
-            await transporter.sendMail({
-                from: from,
-                to,
-                subject,
-                html,
-                attachments: [
-                    ...(logoBuffer ? [{
-                        filename: 'toyoxpress-logo.png',
-                        content: logoBuffer,
-                        cid: 'toyoxpress-logo' // inline image referenced in html
-                    }] : []),
-                    {
-                        filename: `Pedido_${correlativo}.pdf`,
-                        content: pdfBuffer
-                    }
-                ],
-            });
-            logger.info(`📧 Email enviado → ${to}`);
-        } catch (e: any) {
-            logger.error(`❌ Email falló → ${to}:`, e.message);
+    const body = {
+        sender: { name: fromName, email: fromEmail },
+        to: recipients,
+        subject,
+        htmlContent: html,
+        attachments: [
+            ...(logoBuffer ? [{
+                name: 'toyoxpress-logo.png',
+                content: logoBuffer.toString('base64')
+            }] : []),
+            {
+                name: `Pedido_${correlativo}.pdf`,
+                content: pdfBuffer.toString('base64')
+            }
+        ]
+    };
+
+    try {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': apiKey,
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            logger.error(`❌ [Brevo API] Error HTTP ${response.status}:`, JSON.stringify(errorData));
+            return;
         }
+
+        logger.info(`📧 Email enviado vía API HTTP OK (#${correlativo})`);
+    } catch (e: any) {
+        logger.error(`❌ [Brevo API] Fallo crítico al enviar email:`, e.message);
     }
 }
 
