@@ -217,7 +217,7 @@ io.on('connection', async (socket) => {
     });
 });
 
-const MONGO_URI = process.env.MONGO_DEV || 'mongodb://127.0.0.1:27017/toyoxpress';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/toyoxpress';
 
 logger.info(`[DB] Intentando conectar a MongoDB...`);
 
