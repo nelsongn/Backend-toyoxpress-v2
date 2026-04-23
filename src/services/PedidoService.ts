@@ -131,14 +131,15 @@ function generarPDFBuffer(
             const thY = y + 5;
 
             // Column X positions
-            const c1 = 32, c2 = 102, c3 = 307, c4 = 382, c5 = 430, c6 = 494;
+            const c1 = 32, c2 = 95, c_ref = 275, c3 = 345, c4 = 405, c5 = 450, c6 = 505;
 
             doc.text('CÓDIGO', c1, thY);
             doc.text('DESCRIPCIÓN', c2, thY);
+            doc.text('REF.', c_ref, thY);
             doc.text('MARCA', c3, thY);
-            doc.text('CANT.', c4, thY, { width: 48, align: 'center' });
-            doc.text('P.U. $', c5, thY, { width: 64, align: 'right' });
-            doc.text('TOTAL $', c6, thY, { width: 70, align: 'right' });
+            doc.text('CANT.', c4, thY, { width: 40, align: 'center' });
+            doc.text('P.U. $', c5, thY, { width: 50, align: 'right' });
+            doc.text('TOTAL $', c6, thY, { width: 62, align: 'right' });
 
             y += 18;
 
@@ -159,12 +160,13 @@ function generarPDFBuffer(
                 }
                 const ty = y + 5;
 
-                doc.fontSize(7).fillColor('#64748b').text(p.codigo, c1, ty, { width: 66, height: 10, lineBreak: false });
-                doc.fontSize(7.5).fillColor('#1e293b').text(p.nombre, c2, ty, { width: 200, height: 10, lineBreak: false });
-                doc.fontSize(7).fillColor('#64748b').text(p.marca || '—', c3, ty, { width: 70, height: 10, lineBreak: false });
-                doc.fontSize(7.5).fillColor('#1e293b').text(String(p.cantidad), c4, ty, { width: 48, align: 'center' });
-                doc.text(p.precio.toFixed(2), c5, ty, { width: 64, align: 'right' });
-                doc.text(p.total.toFixed(2), c6, ty, { width: 70, align: 'right' });
+                doc.fontSize(7).fillColor('#64748b').text(p.codigo, c1, ty, { width: 60, height: 10, lineBreak: false });
+                doc.fontSize(7.5).fillColor('#1e293b').text(p.nombre, c2, ty, { width: 175, height: 10, lineBreak: false });
+                doc.fontSize(7).fillColor('#64748b').text(p.referencia || '—', c_ref, ty, { width: 65, height: 10, lineBreak: false });
+                doc.fontSize(7).fillColor('#64748b').text(p.marca || '—', c3, ty, { width: 55, height: 10, lineBreak: false });
+                doc.fontSize(7.5).fillColor('#1e293b').text(String(p.cantidad), c4, ty, { width: 40, align: 'center' });
+                doc.text(p.precio.toFixed(2), c5, ty, { width: 50, align: 'right' });
+                doc.text(p.total.toFixed(2), c6, ty, { width: 62, align: 'right' });
 
                 y += 16;
                 doc.moveTo(28, y).lineTo(567, y).lineWidth(0.5).strokeColor('#e2e8f0').stroke();
