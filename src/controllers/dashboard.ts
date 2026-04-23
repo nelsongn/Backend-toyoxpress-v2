@@ -45,23 +45,40 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         let desgloseCuentas: any[] = [];
 
         if (puedeVerCuentas) {
-            const cuentas = await Cuenta.find().lean();
+            // Calculate absolute total balance first (Global sum of all movements ever)
+            const allMovimientos = await Movimiento.find().lean();
+            allMovimientos.forEach(m => {
+                if (m.movimiento === 'ingreso') saldoTotal += Number(m.monto || 0);
+                if (m.movimiento === 'egreso') saldoTotal -= Number(m.monto || 0);
+            });
 
-            // Calculate balances by summing up ALL movements for each account (Historical)
+            const cuentas = await Cuenta.find().lean();
+            const activeAccountValues = cuentas.map(c => c.value);
+            let totalInActiveAccounts = 0;
+
+            // Calculate balances for defined accounts
             for (const c of cuentas) {
                 const nombreCuenta = c.label || c.value;
-
-                // Sum all movements for this specific account regardless of date
-                const accountMovimientos = await Movimiento.find({ cuenta: c.value }).lean();
+                const accountMovimientos = allMovimientos.filter(m => m.cuenta === c.value);
+                
                 let accountBalance = 0;
-
                 accountMovimientos.forEach(m => {
                     if (m.movimiento === 'ingreso') accountBalance += Number(m.monto || 0);
                     if (m.movimiento === 'egreso') accountBalance -= Number(m.monto || 0);
                 });
 
-                saldoTotal += accountBalance;
+                totalInActiveAccounts += accountBalance;
                 desgloseCuentas.push({ nombre: nombreCuenta, balance: accountBalance, color: c.color });
+            }
+
+            // If there's a difference, it's money in deleted accounts or movements with no account
+            const othersBalance = saldoTotal - totalInActiveAccounts;
+            if (Math.abs(othersBalance) > 0.01) {
+                desgloseCuentas.push({ 
+                    nombre: "Otros (Sin asignar)", 
+                    balance: othersBalance, 
+                    color: "#94a3b8" 
+                });
             }
         }
 
