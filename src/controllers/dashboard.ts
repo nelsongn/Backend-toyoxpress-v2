@@ -125,6 +125,8 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
             ok: true,
             esAdmin: esAdminGlobal || puedeVerOtrosMovis, // Info for Frontend UI mode
             puedeVerCuentas,
+            puedeVerMovimientos: esAdmin,
+            puedeVerOtrosMovimientos: esAdminGlobal || puedeVerOtrosMovis,
             financiero: {
                 ingresosHoy,
                 egresosHoy,
