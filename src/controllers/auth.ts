@@ -53,7 +53,8 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
                 consultarPrecios: true,
                 verClientes: true,
                 verExcel: true,
-                cargarProductos: true
+                cargarProductos: true,
+                verPedidos: true
             };
         }
 
