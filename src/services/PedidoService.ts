@@ -355,7 +355,7 @@ export async function procesarPedido({ pedidoId }: { pedidoId: string }) {
 
         // Email for billing (from cliente + extras)
         const extractEmails = (raw: string) => raw.split(/[\s;,]+/).filter(s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s));
-        const clienteEmail = cliente['Correo Electronico'] ? extractEmails(cliente['Correo Electronico'])[0] : '';
+        const clienteEmail = (cliente['Correo Electronico'] ? extractEmails(cliente['Correo Electronico'])[0] : '') || 'contacto@toyoxpress.com';
 
         const orderPayload: any = {
             billing: { first_name: cliente.Nombre, email: clienteEmail, phone: cliente.Telefonos, address_1: cliente.Direccion, state: cliente.Estado, city: cliente.Ciudad },
