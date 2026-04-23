@@ -287,22 +287,16 @@ async function enviarEmails(pdfBuffer: Buffer, correlativo: number, clienteNombr
     </div>
     `;
 
-    Object.assign(sendSmtpEmail, {
-        sender: { name: fromName, email: fromEmail },
-        to: recipients,
-        subject,
-        htmlContent: html,
-        attachments: [
-            ...(logoBuffer ? [{
-                name: 'toyoxpress-logo.png',
-                content: logoBuffer.toString('base64')
-            }] : []),
-            {
-                name: `Pedido_${correlativo}.pdf`,
-                content: pdfBuffer.toString('base64')
-            }
-        ]
-    });
+    sendSmtpEmail.sender = { name: fromName, email: fromEmail };
+    sendSmtpEmail.to = recipients;
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = html;
+    sendSmtpEmail.attachment = [
+        {
+            name: `Pedido_${correlativo}.pdf`,
+            content: pdfBuffer.toString('base64')
+        }
+    ];
 
     try {
         const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
