@@ -17,7 +17,8 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         const puedeVerMovis = !!user.permissions?.verMovimientos;
         const esAdmin = esAdminGlobal || puedeVerOtrosMovis || puedeVerMovis;
 
-        const puedeVerCuentas = esAdminGlobal || !!user.permissions?.configurarCuentas || !!user.permissions?.consultarPrecios;
+        const puedeVerCuentas = esAdminGlobal || !!user.permissions?.configurarCuentas;
+        const puedeVerPedidos = esAdminGlobal || !!user.permissions?.verPedidos;
 
         // 1. Resumen Financiero de Hoy
         const hoy = new Date();
@@ -126,6 +127,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
             esAdmin: esAdminGlobal || puedeVerOtrosMovis, // Info for Frontend UI mode
             puedeVerCuentas,
             puedeVerMovimientos: esAdmin,
+            puedeVerPedidos,
             puedeVerOtrosMovimientos: esAdminGlobal || puedeVerOtrosMovis,
             financiero: {
                 ingresosHoy,
@@ -139,7 +141,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
             pendientesAprobar,
             cuentas: desgloseCuentas,
             recientes: {
-                pedidos: ultimosPedidos,
+                pedidos: puedeVerPedidos ? ultimosPedidos : [],
                 movimientos: ultimosMovimientos
             }
         });
