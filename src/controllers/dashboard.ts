@@ -27,7 +27,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         let movimientosQuery: any = { fecha: { $gte: hoy } };
         // Si no tiene permisos ampliados, solo ve sus propios movimientos y ventas
         if (!esAdminGlobal && !puedeVerOtrosMovis) {
-            movimientosQuery.vendedor = nombreVendedor;
+            movimientosQuery.usuario = nombreVendedor;
         }
 
         const movimientosHoy = await Movimiento.find(movimientosQuery).lean();
@@ -95,13 +95,26 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         const pendientesAprobar = await Movimiento.countDocuments(queryPendientes);
 
         // 4. Métricas de Catálogo
-        const totalClientes = await Cliente.countDocuments();
+        const puedeVerTodosLosClientes = esAdminGlobal || !!user.permissions?.verClientes;
+        let clientesQuery: any = {};
+        if (!puedeVerTodosLosClientes) {
+            const cv = user.vendedor;
+            if (cv !== undefined && cv !== null) {
+                const padded = cv > 0 && cv <= 9 ? `0${cv}` : `${cv}`;
+                const simple = String(cv);
+                clientesQuery['Vendedores Codigo'] = { $in: [padded, simple] };
+            } else {
+                clientesQuery['Vendedores Codigo'] = '__NONE__';
+            }
+        }
+
+        const totalClientes = await Cliente.countDocuments(clientesQuery);
         const totalProductos = await Producto.countDocuments();
 
         // 4. Actividad Reciente
         let pedidosQuery: any = {};
-        if (!esAdminGlobal && !puedeVerOtrosMovis) {
-            pedidosQuery.vendedor = nombreVendedor;
+        if (!esAdminGlobal) {
+            pedidosQuery.vendedorId = user.id;
         }
 
         let ultimosPedidos: any[] = await Pedido.find(pedidosQuery)

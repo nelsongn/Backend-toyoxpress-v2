@@ -78,9 +78,10 @@ export const getClientes = async (req: Request, res: Response) => {
         if (!puedeVerClientes) {
             const cv = user.vendedor;
             if (cv !== undefined && cv !== null) {
-                // Formateamos logica V1 (01, 02, etc.)
-                const numStr = cv > 0 && cv <= 9 ? `0${cv}` : `${cv}`;
-                query['Vendedores Codigo'] = numStr;
+                // Formateamos logica robusta para capturar tanto "06" como "6"
+                const padded = cv > 0 && cv <= 9 ? `0${cv}` : `${cv}`;
+                const simple = String(cv);
+                query['Vendedores Codigo'] = { $in: [padded, simple] };
             } else {
                 // Si no tiene permisos y tampoco código de vendedor, devolvemos un array vacío
                 return res.status(200).json({
