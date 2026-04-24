@@ -129,6 +129,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
             id: user._id,
             email: user.email,
             name: user.username,
+            vendedor: user.vendedor,
             permissions: effectivePermissions
         };
 
@@ -210,7 +211,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-        const { email, username, permissions } = req.body;
+        const { email, username, permissions, vendedor } = req.body;
 
         const user = await User.findById(id);
         if (!user) {
@@ -220,6 +221,9 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 
         user.email = email || user.email;
         user.username = username || user.username;
+        if (vendedor !== undefined && vendedor !== null) {
+            user.vendedor = vendedor;
+        }
         if (permissions) {
             user.permissions = permissions;
         }
