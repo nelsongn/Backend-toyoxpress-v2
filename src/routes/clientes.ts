@@ -7,7 +7,7 @@ const router = Router();
 // /api/clientes — all routes require authentication
 router.use(validateJwt);
 
-router.get('/', requirePermission('verClientes'), getClientes);
+router.get('/', getClientes);
 router.post('/upload', requirePermission('cargarProductos'), uploadClientes);
 
 export default router;

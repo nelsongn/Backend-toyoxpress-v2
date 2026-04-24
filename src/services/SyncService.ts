@@ -74,7 +74,7 @@ export const startWooCommerceSync = async (excelData: any[], fileName: string) =
         const currentStock = producto["Existencia Actual"] || producto.Existencia || producto.Stock || producto.stock_quantity || 0;
 
         return {
-            name: productName,
+            name: `${productName} ${productSku}`,
             sku: String(productSku),
             price: String(priceMin),
             regular_price: String(priceMin),

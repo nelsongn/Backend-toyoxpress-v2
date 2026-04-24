@@ -64,11 +64,35 @@ export const uploadClientes = async (req: Request, res: Response) => {
 // @access  Privado (JWT)
 export const getClientes = async (req: Request, res: Response) => {
     try {
+        const user = (req as any).user;
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 20;
         const search = (req.query.search as string) || '';
 
         const query: any = {};
+
+        // Verificamos permisos y relaciones
+        const esAdminGlobal = user.name === 'admin';
+        const puedeVerClientes = esAdminGlobal || !!user.permissions?.verClientes;
+
+        if (!puedeVerClientes) {
+            const cv = user.vendedor;
+            if (cv !== undefined && cv !== null) {
+                // Formateamos logica V1 (01, 02, etc.)
+                const numStr = cv > 0 && cv <= 9 ? `0${cv}` : `${cv}`;
+                query['Vendedores Codigo'] = numStr;
+            } else {
+                // Si no tiene permisos y tampoco código de vendedor, devolvemos un array vacío
+                return res.status(200).json({
+                    success: true,
+                    total: 0,
+                    page,
+                    totalPages: 0,
+                    data: [],
+                });
+            }
+        }
+
         if (search) {
             query.$or = [
                 { Nombre: { $regex: search, $options: 'i' } },
