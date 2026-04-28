@@ -15,10 +15,7 @@ async function forceCreateLockedSkus() {
     await mongoose.connect(process.env.MONGO_DEV || "mongodb://127.0.0.1:27017/toyoxpress");
 
     const lockedSkus = [
-        "90311-75019",
-        "90311-99010",
-        "90919-01164",
-        "90919-01176"
+        "11213-28021"
     ];
 
     console.log("SKUs detectados:", lockedSkus);

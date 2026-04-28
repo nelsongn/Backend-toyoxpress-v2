@@ -71,6 +71,7 @@ export const startWooCommerceSync = async (excelData: any[], fileName: string) =
         const productSku = producto.Código || producto.Codigo || producto.SKU || producto.sku || "N/A";
         const priceMin = producto["Precio 1"] || producto["Precio Minimo"] || producto.Precio || 0;
         const priceMax = producto["Precio 2"] || producto["Precio Mayor"] || 0;
+        const priceOffer = producto["Precio Oferta"] || producto.sale_price || 0;
         const currentStock = producto["Existencia Actual"] || producto.Existencia || producto.Stock || producto.stock_quantity || 0;
 
         return {
@@ -78,7 +79,7 @@ export const startWooCommerceSync = async (excelData: any[], fileName: string) =
             sku: String(productSku),
             price: String(priceMin),
             regular_price: String(priceMin),
-            sale_price: "",
+            sale_price: priceOffer ? String(priceOffer) : "",
             manage_stock: true,
             status: "publish",
             stock_quantity: Number(currentStock),
@@ -109,6 +110,7 @@ export const startWooCommerceSync = async (excelData: any[], fileName: string) =
             "Existencia Actual": Number(currentStock),
             "Precio Minimo": Number(priceMin),
             "Precio Mayor": Number(priceMax),
+            "Precio Oferta": Number(priceOffer),
         };
     });
 
