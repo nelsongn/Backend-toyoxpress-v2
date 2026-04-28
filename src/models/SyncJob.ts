@@ -14,7 +14,9 @@ export interface ISyncJob extends Document {
     details: Array<{
         chunkIndex: number;
         message: string;
-        skus: string[];
+        createdDetails: string[];
+        updatedDetails: string[];
+        failedDetails: string[];
         status: 'success' | 'error' | 'warning';
         timestamp: Date;
     }>;
@@ -41,7 +43,9 @@ const SyncJobSchema = new Schema<ISyncJob>({
         {
             chunkIndex: { type: Number },
             message: { type: String },
-            skus: [{ type: String }],
+            createdDetails: [{ type: String }],
+            updatedDetails: [{ type: String }],
+            failedDetails: [{ type: String }],
             status: { type: String, enum: ['success', 'error', 'warning'] },
             timestamp: { type: Date, default: Date.now }
         }

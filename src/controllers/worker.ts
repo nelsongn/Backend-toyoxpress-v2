@@ -183,9 +183,9 @@ export const handleSQSProductMessage = async (req: Request, res: Response) => {
                 latestChunkInfo: `Chunk #${chunkIndex} processado: C(${createdCount}) U(${updatedCount}) F(${failedCount})`,
                 latestChunkDetails: {
                     chunkIndex,
-                    created: createdDetails,
-                    updated: updatedDetails,
-                    failed: failedDetails
+                    createdDetails,
+                    updatedDetails,
+                    failedDetails
                 }
             });
 

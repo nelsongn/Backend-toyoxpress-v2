@@ -36,7 +36,8 @@ const ProductoSchema: Schema = new Schema({
     Marca: { type: String },
     "Existencia Actual": { type: Number, default: 0 },
     "Precio Minimo": { type: Number, default: 0 },
-    "Precio Mayor": { type: Number, default: 0 }
+    "Precio Mayor": { type: Number, default: 0 },
+    "Precio Oferta": { type: Number, default: 0 }
 }, {
     timestamps: true,
     strict: false // Allows dynamic fields from Excel without throwing validation errors
