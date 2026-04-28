@@ -104,18 +104,21 @@ export const handleSQSProductMessage = async (req: Request, res: Response) => {
                             // El producto dio error, puede ser un glitch "ya se está procesando" o un SKU inválido sin ID.
                             // Intentamos recuperar el ID de WooCommerce buscando manualmente por SKU.
                             try {
+                                logger.info(`[Worker - BG] Recuperando ID para SKU trabado: ${originalItem.sku}`);
                                 const checkRes = await WooCommerce.get("products", { sku: originalItem.sku });
                                 if (checkRes.data && checkRes.data.length > 0) {
                                     recoveredId = checkRes.data[0].id;
+                                    logger.info(`[Worker - BG] ID recuperado activo: ${recoveredId}`);
                                 } else {
                                     // Búsqueda en la papelera (trash)
                                     const trashRes = await WooCommerce.get("products", { sku: originalItem.sku, status: "trash" });
                                     if (trashRes.data && trashRes.data.length > 0) {
                                         recoveredId = trashRes.data[0].id;
+                                        logger.info(`[Worker - BG] ID recuperado en papelera: ${recoveredId}`);
                                     }
                                 }
-                            } catch (e) {
-                                // Ignorar errores de red en la recuperación, fallback al mensaje original
+                            } catch (e: any) {
+                                logger.error(`[Worker - BG] Error al recuperar ID para ${originalItem.sku}:`, e.response?.data || e.message);
                             }
                         }
 

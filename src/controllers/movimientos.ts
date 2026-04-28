@@ -14,6 +14,8 @@ export const createMovimiento = async (req: Request, res: Response): Promise<voi
             zelle = 0,
             efectivo = 0,
             dolares = 0,
+            otro = 0,
+            change = 0,
             vueltoBs = 0,
             vueltoDolar = 0,
             vueltoEfectivo = 0,
@@ -61,6 +63,8 @@ export const createMovimiento = async (req: Request, res: Response): Promise<voi
             zelle: Number(zelle),
             efectivo: Number(efectivo),
             dolares: Number(dolares),
+            otro: Number(otro),
+            change: Number(change),
             vueltoBs: Number(vueltoBs),
             vueltoDolar: Number(vueltoDolar),
             vueltoEfectivo: Number(vueltoEfectivo),
@@ -160,7 +164,7 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
 
         if (req.query.tipoPago) {
             const pagoType = req.query.tipoPago as string;
-            if (['bs', 'zelle', 'efectivo', 'dolares'].includes(pagoType)) {
+            if (['bs', 'zelle', 'efectivo', 'dolares', 'otro'].includes(pagoType)) {
                 query[pagoType] = { $gt: 0 };
             }
         }
@@ -359,6 +363,8 @@ export const updateMovimiento = async (req: Request, res: Response): Promise<voi
             zelle = 0,
             efectivo = 0,
             dolares = 0,
+            otro = 0,
+            change = 0,
             vueltoBs = 0,
             vueltoDolar = 0,
             vueltoEfectivo = 0,
@@ -392,6 +398,8 @@ export const updateMovimiento = async (req: Request, res: Response): Promise<voi
             zelle: Number(zelle),
             efectivo: Number(efectivo),
             dolares: Number(dolares),
+            otro: Number(otro),
+            change: Number(change),
             vueltoBs: Number(vueltoBs),
             vueltoDolar: Number(vueltoDolar),
             vueltoEfectivo: Number(vueltoEfectivo),

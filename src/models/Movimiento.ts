@@ -10,9 +10,11 @@ export interface IMovimiento extends Document {
     movimiento: 'ingreso' | 'egreso';
     concepto: string;
     bs: number;
+    change: number; // Exchange rate (Valor de cambio)
     zelle: number;
     efectivo: number;
     dolares: number;
+    otro: number; // Otro metodo de pago
     vueltoBs: number;
     vueltoDolar: number;
     vueltoEfectivo: number;
@@ -36,9 +38,11 @@ const MovimientoSchema: Schema = new Schema({
 
     // Refactored to Numbers to prevent string issues
     bs: { type: Number, default: 0 },
+    change: { type: Number, default: 0 },
     zelle: { type: Number, default: 0 },
     efectivo: { type: Number, default: 0 },
     dolares: { type: Number, default: 0 },
+    otro: { type: Number, default: 0 },
     vueltoBs: { type: Number, default: 0 },
     vueltoDolar: { type: Number, default: 0 },
     vueltoEfectivo: { type: Number, default: 0 },
