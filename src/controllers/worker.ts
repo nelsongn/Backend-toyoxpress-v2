@@ -204,8 +204,14 @@ export const handleSQSProductMessage = async (req: Request, res: Response) => {
                 }
             });
 
+            const currentJob = await SyncJob.findById(jobId).lean();
             io.emit('sync_progress', {
                 jobId,
+                totalChunks: currentJob?.totalChunks || 0,
+                chunksProcessed: currentJob?.chunksProcessed || 0,
+                totalSKUs: currentJob?.totalSKUs || 0,
+                status: currentJob?.status || 'failed',
+                metrics: currentJob?.metrics || { created: 0, updated: 0, failed: 0 },
                 error: true,
                 chunkIndex,
                 message: "Un paquete no pudo ser enviado a WooCommerce (Timeout / Caída)."
