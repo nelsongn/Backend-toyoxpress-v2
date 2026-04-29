@@ -225,7 +225,7 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
         };
 
         const [totalsAggr] = await Movimiento.aggregate([
-            { $match: queryTotals },
+            { $match: { disabled: { $ne: true } } },
             {
                 $group: {
                     _id: null,
@@ -354,6 +354,7 @@ export const getUsuariosDistintos = async (req: Request, res: Response): Promise
 export const updateMovimiento = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
+        const activeUser = (req as any).user;
         const {
             usuario,
             cuenta,
@@ -390,7 +391,8 @@ export const updateMovimiento = async (req: Request, res: Response): Promise<voi
         }
 
         const updatedData: any = {
-            usuario,
+            usuario_modifico: activeUser?.name || "Admin",
+            id_usuario_modifico: activeUser?.id_usuario || "123",
             cuenta,
             movimiento,
             concepto,

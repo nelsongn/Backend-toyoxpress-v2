@@ -119,8 +119,8 @@ export const getInventario = async (req: Request, res: Response) => {
         if (soloConStock) query["Existencia Actual"] = { $gt: 0 };
 
         const selectFields = {
-            sku: 1, "Código": 1, Nombre: 1, Marca: 1, Ref: 1,
-            "Existencia Actual": 1, "Precio Minimo": 1, "Precio Mayor": 1,
+            sku: 1, "Código": 1, Nombre: 1, Marca: 1, Ref: 1, Modelo: 1,
+            "Existencia Actual": 1, "Precio Minimo": 1, "Precio Mayor": 1, "Precio Oferta": 1,
             name: 1, stock_quantity: 1, price: 1,
         };
         const sortOptions: Record<string, 1 | -1> = { Marca: 1, Nombre: 1 };

@@ -24,6 +24,8 @@ export interface IMovimiento extends Document {
     status: string;
     identificador?: string;
     vale?: string;
+    usuario_modifico?: string;
+    id_usuario_modifico?: string;
 }
 
 const MovimientoSchema: Schema = new Schema({
@@ -53,6 +55,8 @@ const MovimientoSchema: Schema = new Schema({
     status: { type: String, default: 'completado' },
     identificador: { type: String },
     vale: { type: String },
+    usuario_modifico: { type: String },
+    id_usuario_modifico: { type: String },
     disabled: { type: Boolean, default: false }
 }, {
     timestamps: true // Adds createdAt and updatedAt automatically
