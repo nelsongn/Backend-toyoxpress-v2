@@ -275,8 +275,11 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
             }
         ]);
 
-        const saldo_total = totalsAggr ? totalsAggr.saldo_total : 0;
-        const caja_chica = totalsAggr ? totalsAggr.caja_chica : 0;
+        const canSeeSaldoTotal = user?.permissions?.verSaldoTotal === true || user?.name === 'admin';
+        const canSeeCajaChica = user?.permissions?.verCajaChica === true || user?.name === 'admin';
+
+        const saldo_total = canSeeSaldoTotal ? (totalsAggr ? totalsAggr.saldo_total : 0) : 0;
+        const caja_chica = canSeeCajaChica ? (totalsAggr ? totalsAggr.caja_chica : 0) : 0;
         const totalPages = Math.ceil(total / limit) || 1;
 
         res.status(200).json({ success: true, total, totalPages, movimientos, saldo_total, caja_chica });

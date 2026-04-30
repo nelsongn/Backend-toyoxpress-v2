@@ -49,6 +49,8 @@ const UserSchema: Schema = new Schema({
         verExcel: { type: Boolean, default: false },
         cargarProductos: { type: Boolean, default: false },
         verPedidos: { type: Boolean, default: false },
+        verCajaChica: { type: Boolean, default: false },
+        verSaldoTotal: { type: Boolean, default: false },
     }
 }, {
     timestamps: true
