@@ -24,7 +24,11 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0); // Inicio del día local del servidor
 
-        let movimientosQuery: any = { fecha: { $gte: hoy } };
+        let movimientosQuery: any = { 
+            fecha: { $gte: hoy },
+            disabled: { $ne: true },
+            vale: { $exists: true, $nin: ["", null] }
+        };
         // Si no tiene permisos ampliados, solo ve sus propios movimientos y ventas
         if (!esAdminGlobal && !puedeVerOtrosMovis) {
             movimientosQuery.usuario = nombreVendedor;
@@ -46,7 +50,10 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
 
         if (puedeVerCuentas) {
             // Calculate absolute total balance first (Global sum of all movements ever)
-            const allMovimientos = await Movimiento.find().lean();
+            const allMovimientos = await Movimiento.find({ 
+                disabled: { $ne: true },
+                vale: { $exists: true, $nin: ["", null] }
+            }).lean();
             allMovimientos.forEach(m => {
                 if (m.movimiento === 'ingreso') saldoTotal += Number(m.monto || 0);
                 if (m.movimiento === 'egreso') saldoTotal -= Number(m.monto || 0);

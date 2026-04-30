@@ -130,7 +130,16 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
                 });
             }
         }
-        if (req.query.cuenta) query.cuenta = req.query.cuenta;
+        if (req.query.cuenta) {
+            const cuentaQuery = req.query.cuenta;
+            if (Array.isArray(cuentaQuery)) {
+                query.cuenta = { $in: cuentaQuery };
+            } else if (typeof cuentaQuery === 'string' && cuentaQuery.includes(',')) {
+                query.cuenta = { $in: cuentaQuery.split(',') };
+            } else {
+                query.cuenta = cuentaQuery;
+            }
+        }
         if (req.query.vale) query.vale = { $regex: req.query.vale, $options: 'i' };
         if (req.query.concepto) query.concepto = { $regex: req.query.concepto, $options: 'i' };
 
@@ -216,7 +225,6 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
         // Calculate Totals (Saldo Total, Caja Chica) using aggregate pipeline over ALL documents that match the query
         // Since V1 had string amounts, and V2 has number amounts, we adapt this logic safely.
         // We evaluate BOTH old V1 strings ("identificador" starts with "I") and new V2 "movimiento" equals "ingreso"
-        // We evaluate BOTH old V1 strings ("identificador" starts with "I") and new V2 "movimiento" equals "ingreso"
         const isIngresoCond = {
             $or: [
                 { $eq: [{ $substr: ["$identificador", 0, 1] }, "I"] },
@@ -224,8 +232,18 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
             ]
         };
 
+        // Special match for totals aggregation: Only Account Filter and Verification Status should apply
+        const totalsMatch: any = { 
+            disabled: { $ne: true },
+            vale: { $exists: true, $nin: ["", null] }
+        };
+
+        if (query.cuenta) {
+            totalsMatch.cuenta = query.cuenta;
+        }
+
         const [totalsAggr] = await Movimiento.aggregate([
-            { $match: { disabled: { $ne: true } } },
+            { $match: totalsMatch },
             {
                 $group: {
                     _id: null,
