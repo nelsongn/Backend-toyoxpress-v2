@@ -27,15 +27,15 @@ export const createMovimiento = async (req: Request, res: Response): Promise<voi
         // Check for duplicate vale if provided
         const valeToCheck = vale || (cuenta === 'CajaChica' ? undefined : null); // CajaChica uses auto-gen ID later
         if (valeToCheck && valeToCheck.trim() !== "") {
-            const existing = await Movimiento.findOne({ 
-                vale: { $regex: new RegExp(`^${valeToCheck.trim()}$`, "i") }, 
-                disabled: { $ne: true } 
+            const existing = await Movimiento.findOne({
+                vale: { $regex: new RegExp(`^${valeToCheck.trim()}$`, "i") },
+                disabled: { $ne: true }
             });
 
             if (existing) {
-                res.status(400).json({ 
-                    success: false, 
-                    message: `El número de aprobación '${valeToCheck}' ya está registrado en el movimiento ${existing.identificador || existing.id}.` 
+                res.status(400).json({
+                    success: false,
+                    message: `El número de aprobación '${valeToCheck}' ya está registrado en el movimiento ${existing.identificador || existing.id}.`
                 });
                 return;
             }
@@ -243,7 +243,7 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
         }
 
         const [totalsAggr] = await Movimiento.aggregate([
-            { $match: queryTotals },
+            { $match: totalsMatch },
             {
                 $group: {
                     _id: null,
