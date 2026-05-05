@@ -21,6 +21,23 @@ export const createMovimiento = async (req: Request, res: Response): Promise<voi
             fechaString
         } = req.body;
 
+        // Check for duplicate vale if provided
+        const valeToCheck = vale || (cuenta === 'CajaChica' ? undefined : null); // CajaChica uses auto-gen ID later
+        if (valeToCheck && valeToCheck.trim() !== "") {
+            const existing = await Movimiento.findOne({ 
+                vale: { $regex: new RegExp(`^${valeToCheck.trim()}$`, "i") }, 
+                disabled: { $ne: true } 
+            });
+
+            if (existing) {
+                res.status(400).json({ 
+                    success: false, 
+                    message: `El número de aprobación '${valeToCheck}' ya está registrado en el movimiento ${existing.identificador || existing.id}.` 
+                });
+                return;
+            }
+        }
+
         // FIX: Optimized ID Generation (No Memory Leak)
         // Avoids fetching all documents into memory. Just counts them.
         const totalCurrentMoves = await Movimiento.estimatedDocumentCount();
@@ -43,6 +60,8 @@ export const createMovimiento = async (req: Request, res: Response): Promise<voi
             zelle: Number(Number(zelle).toFixed(2)),
             efectivo: Number(Number(efectivo).toFixed(2)),
             dolares: Number(Number(dolares).toFixed(2)),
+            otro: Number(Number(otro).toFixed(2)),
+            change: Number(Number(change).toFixed(2)),
             vueltoBs: Number(Number(vueltoBs).toFixed(2)),
             vueltoDolar: Number(Number(vueltoDolar).toFixed(2)),
             vueltoEfectivo: Number(Number(vueltoEfectivo).toFixed(2)),
@@ -133,14 +152,14 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
         if (req.query.status && req.query.status !== 'todos') {
             const statusVal = req.query.status as string;
             if (statusVal === 'verificados' || statusVal === 'Aprove') {
-                andConditions.push({ 
+                andConditions.push({
                     $or: [
                         { vale: { $exists: true, $nin: ["", null] } },
                         { cuenta: 'CajaChica' }
                     ]
                 });
             } else if (statusVal === 'no_verificados' || statusVal === 'Unverified') {
-                andConditions.push({ 
+                andConditions.push({
                     $and: [
                         { $or: [{ vale: "" }, { vale: { $exists: false } }, { vale: null }] },
                         { cuenta: { $ne: 'CajaChica' } }
@@ -289,6 +308,22 @@ export const aprobarMovimiento = async (req: Request, res: Response): Promise<vo
         const { id } = req.params;
         const { vale } = req.body;
 
+        if (vale && vale.trim() !== "") {
+            const existing = await Movimiento.findOne({ 
+                vale: { $regex: new RegExp(`^${vale.trim()}$`, "i") }, 
+                disabled: { $ne: true },
+                _id: { $ne: id }
+            });
+
+            if (existing) {
+                res.status(400).json({ 
+                    success: false, 
+                    message: `El número de aprobación '${vale}' ya está registrado en el movimiento ${existing.identificador || existing.id}.` 
+                });
+                return;
+            }
+        }
+
         const movimiento = await Movimiento.findByIdAndUpdate(
             id,
             { status: 'aprobado', vale },
@@ -352,6 +387,22 @@ export const updateMovimiento = async (req: Request, res: Response): Promise<voi
             fechaString
         } = req.body;
 
+        if (vale && vale.trim() !== "") {
+            const existing = await Movimiento.findOne({ 
+                vale: { $regex: new RegExp(`^${vale.trim()}$`, "i") }, 
+                disabled: { $ne: true },
+                _id: { $ne: id }
+            });
+
+            if (existing) {
+                res.status(400).json({ 
+                    success: false, 
+                    message: `El número de aprobación '${vale}' ya está registrado en el movimiento ${existing.identificador || existing.id}.` 
+                });
+                return;
+            }
+        }
+
         const updatedData: any = {
             usuario,
             cuenta,
@@ -361,10 +412,13 @@ export const updateMovimiento = async (req: Request, res: Response): Promise<voi
             zelle: Number(Number(zelle).toFixed(2)),
             efectivo: Number(Number(efectivo).toFixed(2)),
             dolares: Number(Number(dolares).toFixed(2)),
+            otro: Number(Number(otro).toFixed(2)),
+            change: Number(Number(change).toFixed(2)),
             vueltoBs: Number(Number(vueltoBs).toFixed(2)),
             vueltoDolar: Number(Number(vueltoDolar).toFixed(2)),
             vueltoEfectivo: Number(Number(vueltoEfectivo).toFixed(2)),
             monto: Number(Number(monto).toFixed(2)),
+            vale,
             disabled: false
         };
 
