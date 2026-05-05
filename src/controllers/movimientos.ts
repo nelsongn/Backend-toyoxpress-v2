@@ -233,10 +233,22 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
         };
 
         // Special match for totals aggregation: Only Account Filter and Verification Status should apply
-        const totalsMatch: any = { 
-            disabled: { $ne: true },
-            vale: { $exists: true, $nin: ["", null] }
+        const totalsMatch: any = {
+            disabled: { $ne: true }
         };
+
+        const statusVal = req.query.status as string;
+        if (statusVal === 'no_verificados' || statusVal === 'Unverified') {
+            // When filtering by "no verificados", show the sum of those pending movements
+            totalsMatch.$or = [
+                { vale: "" },
+                { vale: { $exists: false } },
+                { vale: null }
+            ];
+        } else {
+            // Default behavior: show verified balance
+            totalsMatch.vale = { $exists: true, $nin: ["", null] };
+        }
 
         if (query.cuenta) {
             totalsMatch.cuenta = query.cuenta;
