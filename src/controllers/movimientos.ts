@@ -133,14 +133,14 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
         if (req.query.status && req.query.status !== 'todos') {
             const statusVal = req.query.status as string;
             if (statusVal === 'verificados' || statusVal === 'Aprove') {
-                andConditions.push({ 
+                andConditions.push({
                     $or: [
                         { vale: { $exists: true, $nin: ["", null] } },
                         { cuenta: 'CajaChica' }
                     ]
                 });
             } else if (statusVal === 'no_verificados' || statusVal === 'Unverified') {
-                andConditions.push({ 
+                andConditions.push({
                     $and: [
                         { $or: [{ vale: "" }, { vale: { $exists: false } }, { vale: null }] },
                         { cuenta: { $ne: 'CajaChica' } }
@@ -213,7 +213,7 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
         };
 
         // Special match for totals aggregation: Only Account Filter and Verification Status should apply
-        const totalsMatch: any = { 
+        const totalsMatch: any = {
             disabled: { $ne: true }
         };
 
@@ -221,8 +221,8 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
         if (statusVal === 'no_verificados' || statusVal === 'Unverified') {
             // When filtering by "no verificados", show the sum of those pending movements
             totalsMatch.$or = [
-                { vale: "" }, 
-                { vale: { $exists: false } }, 
+                { vale: "" },
+                { vale: { $exists: false } },
                 { vale: null }
             ];
         } else {
