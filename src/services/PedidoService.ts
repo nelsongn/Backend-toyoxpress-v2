@@ -136,7 +136,7 @@ function generarPDFBuffer(
             doc.text('CÓDIGO', c1, thY);
             doc.text('DESCRIPCIÓN', c2, thY);
             doc.text('REF.', c_ref, thY);
-            doc.text('MARCA', c3, thY);
+            doc.text('MODELO', c3, thY);
             doc.text('CANT.', c4, thY, { width: 40, align: 'center' });
             doc.text('P.U. $', c5, thY, { width: 50, align: 'right' });
             doc.text('TOTAL $', c6, thY, { width: 62, align: 'right' });
@@ -163,7 +163,7 @@ function generarPDFBuffer(
                 doc.fontSize(7).fillColor('#64748b').text(p.codigo, c1, ty, { width: 60, height: 10, lineBreak: false });
                 doc.fontSize(7.5).fillColor('#1e293b').text(p.nombre, c2, ty, { width: 175, height: 10, lineBreak: false });
                 doc.fontSize(7).fillColor('#64748b').text(p.referencia || '—', c_ref, ty, { width: 65, height: 10, lineBreak: false });
-                doc.fontSize(7).fillColor('#64748b').text(p.marca || '—', c3, ty, { width: 55, height: 10, lineBreak: false });
+                doc.fontSize(7).fillColor('#64748b').text(p.modelo || '—', c3, ty, { width: 55, height: 10, lineBreak: false });
                 doc.fontSize(7.5).fillColor('#1e293b').text(String(p.cantidad), c4, ty, { width: 40, align: 'center' });
                 doc.text(p.precio.toFixed(2), c5, ty, { width: 50, align: 'right' });
                 doc.text(p.total.toFixed(2), c6, ty, { width: 62, align: 'right' });

@@ -4,6 +4,7 @@ export interface ILineaProducto {
     codigo: string;
     nombre: string;
     marca?: string;
+    modelo?: string;
     referencia?: string;
     cantidad: number;
     precio: number;
@@ -37,6 +38,7 @@ const LineaProductoSchema = new Schema({
     codigo: { type: String, required: true },
     nombre: { type: String, required: true },
     marca: { type: String },
+    modelo: { type: String },
     referencia: { type: String },
     cantidad: { type: Number, required: true },
     precio: { type: Number, required: true },
