@@ -325,16 +325,16 @@ export const aprobarMovimiento = async (req: Request, res: Response): Promise<vo
         const { vale } = req.body;
 
         if (vale && vale.trim() !== "") {
-            const existing = await Movimiento.findOne({ 
-                vale: { $regex: new RegExp(`^${vale.trim()}$`, "i") }, 
+            const existing = await Movimiento.findOne({
+                vale: { $regex: new RegExp(`^${vale.trim()}$`, "i") },
                 disabled: { $ne: true },
                 _id: { $ne: id }
             });
 
             if (existing) {
-                res.status(400).json({ 
-                    success: false, 
-                    message: `El número de aprobación '${vale}' ya está registrado en el movimiento ${existing.identificador || existing.id}.` 
+                res.status(400).json({
+                    success: false,
+                    message: `El número de aprobación '${vale}' ya está registrado en el movimiento ${existing.identificador || existing.id}.`
                 });
                 return;
             }
@@ -407,17 +407,28 @@ export const updateMovimiento = async (req: Request, res: Response): Promise<voi
             vale
         } = req.body;
 
-        if (vale && vale.trim() !== "") {
-            const existing = await Movimiento.findOne({ 
-                vale: { $regex: new RegExp(`^${vale.trim()}$`, "i") }, 
+        const existingMov = await Movimiento.findById(id);
+        if (!existingMov) {
+            res.status(404).json({ success: false, message: 'Movimiento no encontrado' });
+            return;
+        }
+
+        const isCajaChica = cuenta === 'CajaChica';
+        const padId = String(existingMov.id).padStart(4, '0');
+        const newIdentificador = `${movimiento === 'egreso' ? 'E' : 'I'}-${padId}`;
+        const finalVale = isCajaChica ? newIdentificador : vale;
+
+        if (finalVale && finalVale.trim() !== "" && !isCajaChica) {
+            const existing = await Movimiento.findOne({
+                vale: { $regex: new RegExp(`^${finalVale.trim()}$`, "i") },
                 disabled: { $ne: true },
                 _id: { $ne: id }
             });
 
             if (existing) {
-                res.status(400).json({ 
-                    success: false, 
-                    message: `El número de aprobación '${vale}' ya está registrado en el movimiento ${existing.identificador || existing.id}.` 
+                res.status(400).json({
+                    success: false,
+                    message: `El número de aprobación '${finalVale}' ya está registrado en el movimiento ${existing.identificador || existing.id}.`
                 });
                 return;
             }
@@ -439,7 +450,8 @@ export const updateMovimiento = async (req: Request, res: Response): Promise<voi
             vueltoDolar: Number(Number(vueltoDolar).toFixed(2)),
             vueltoEfectivo: Number(Number(vueltoEfectivo).toFixed(2)),
             monto: Number(Number(monto).toFixed(2)),
-            vale,
+            identificador: newIdentificador,
+            vale: finalVale,
             disabled: false
         };
 
