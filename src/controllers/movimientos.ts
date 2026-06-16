@@ -24,6 +24,30 @@ export const createMovimiento = async (req: Request, res: Response): Promise<voi
             vale
         } = req.body;
 
+        // Validaciones previas de campos obligatorios
+        const missingFields: string[] = [];
+        if (!usuario) missingFields.push('usuario');
+        if (!id_usuario) missingFields.push('id_usuario');
+        if (!cuenta) missingFields.push('cuenta');
+        if (!movimiento) missingFields.push('movimiento');
+        if (!concepto) missingFields.push('concepto');
+
+        if (missingFields.length > 0) {
+            res.status(400).json({
+                success: false,
+                message: `Faltan los siguientes campos obligatorios: ${missingFields.join(', ')}`
+            });
+            return;
+        }
+
+        if (movimiento !== 'ingreso' && movimiento !== 'egreso') {
+            res.status(400).json({
+                success: false,
+                message: "El campo 'movimiento' debe ser 'ingreso' o 'egreso'"
+            });
+            return;
+        }
+
         // Check for duplicate vale if provided
         const valeToCheck = vale || (cuenta === 'CajaChica' ? undefined : null); // CajaChica uses auto-gen ID later
         if (valeToCheck && valeToCheck.trim() !== "") {
@@ -87,6 +111,14 @@ export const createMovimiento = async (req: Request, res: Response): Promise<voi
         res.status(201).json({ success: true, movimiento: newMovimiento });
     } catch (error: any) {
         logger.error('Error creating movimiento V2', error);
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map((val: any) => val.message);
+            res.status(400).json({
+                success: false,
+                message: `Error de validación: ${messages.join(', ')}`
+            });
+            return;
+        }
         res.status(500).json({ success: false, message: 'Error interno del servidor' });
     }
 };
@@ -407,6 +439,28 @@ export const updateMovimiento = async (req: Request, res: Response): Promise<voi
             vale
         } = req.body;
 
+        // Validaciones previas de campos obligatorios
+        const missingFields: string[] = [];
+        if (!cuenta) missingFields.push('cuenta');
+        if (!movimiento) missingFields.push('movimiento');
+        if (!concepto) missingFields.push('concepto');
+
+        if (missingFields.length > 0) {
+            res.status(400).json({
+                success: false,
+                message: `Faltan los siguientes campos obligatorios: ${missingFields.join(', ')}`
+            });
+            return;
+        }
+
+        if (movimiento !== 'ingreso' && movimiento !== 'egreso') {
+            res.status(400).json({
+                success: false,
+                message: "El campo 'movimiento' debe ser 'ingreso' o 'egreso'"
+            });
+            return;
+        }
+
         const existingMov = await Movimiento.findById(id);
         if (!existingMov) {
             res.status(404).json({ success: false, message: 'Movimiento no encontrado' });
@@ -475,8 +529,16 @@ export const updateMovimiento = async (req: Request, res: Response): Promise<voi
 
         logger.info(`V2: Movimiento ${updatedMovimiento.identificador || id} actualizado por ${usuario}`);
         res.status(200).json({ success: true, movimiento: updatedMovimiento });
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error updating movimiento V2', error);
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map((val: any) => val.message);
+            res.status(400).json({
+                success: false,
+                message: `Error de validación: ${messages.join(', ')}`
+            });
+            return;
+        }
         res.status(500).json({ success: false, message: 'Error interno del servidor' });
     }
 };
