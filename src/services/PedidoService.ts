@@ -316,7 +316,7 @@ export async function procesarPedido({ pedidoId }: { pedidoId: string }) {
     const pedido = await Pedido.findOneAndUpdate(
         { _id: pedidoId, estado: { $in: ['pendiente', 'procesando'] } },
         { estado: 'procesando' },
-        { new: true }
+        { returnDocument: 'after' }
     );
 
     if (!pedido) {

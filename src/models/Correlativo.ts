@@ -20,7 +20,7 @@ export async function getNextCorrelativo(): Promise<number> {
     const doc = await CorrelativoModel.findOneAndUpdate(
         { nombre: 'pedidos' },
         { $inc: { seq: 1 } },
-        { new: true, upsert: true }
+        { returnDocument: 'after', upsert: true }
     );
     return doc.seq;
 }

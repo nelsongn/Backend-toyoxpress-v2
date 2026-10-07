@@ -178,7 +178,7 @@ export const handleSQSProductMessage = async (req: Request, res: Response) => {
                         }
                     }
                 },
-                { new: true, returnDocument: 'after' } // fixed mongoose deprecation warning
+                { returnDocument: 'after' } // fixed mongoose deprecation warning
             );
 
             if (!job) {
