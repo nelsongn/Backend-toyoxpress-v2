@@ -375,7 +375,7 @@ export const aprobarMovimiento = async (req: Request, res: Response): Promise<vo
         const movimiento = await Movimiento.findByIdAndUpdate(
             id,
             { status: 'aprobado', vale },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!movimiento) {
@@ -517,7 +517,7 @@ export const updateMovimiento = async (req: Request, res: Response): Promise<voi
         const updatedMovimiento = await Movimiento.findByIdAndUpdate(
             id,
             updatedData,
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!updatedMovimiento) {
@@ -551,7 +551,7 @@ export const deleteMovimiento = async (req: Request, res: Response): Promise<voi
         const deletedMovimiento = await Movimiento.findByIdAndUpdate(
             id,
             { disabled: true },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!deletedMovimiento) {

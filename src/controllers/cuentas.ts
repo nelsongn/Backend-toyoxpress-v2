@@ -88,7 +88,7 @@ export const deleteCuenta = async (req: Request, res: Response): Promise<void> =
         const deletedCuenta = await Cuenta.findByIdAndUpdate(
             id,
             { disabled: true },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!deletedCuenta) {
