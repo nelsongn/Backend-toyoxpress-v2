@@ -93,7 +93,7 @@ function generarPDFBuffer(
             }
 
             doc.fontSize(15).font('Helvetica-Bold').fillColor('#0f172a').text('PEDIDO', 0, startY + 5, { align: 'right' });
-            doc.fontSize(7.5).font('Helvetica').fillColor('#64748b').text(`Fecha: ${hora || new Date().toLocaleString('es-VE')}`, { align: 'right' });
+            doc.fontSize(7.5).font('Helvetica').fillColor('#64748b').text(`Fecha: ${hora || new Date().toLocaleString('es-VE', { timeZone: 'America/Caracas' })}`, { align: 'right' });
             doc.text(`Vendedor: ${vendedor}`, { align: 'right' });
 
             doc.moveTo(28, startY + 52).lineTo(567, startY + 52).lineWidth(1.5).strokeColor('#1a1a1a').stroke();
@@ -376,7 +376,7 @@ export async function procesarPedido({ pedidoId }: { pedidoId: string }) {
         logger.info(`[PedidoWorker] [${pedidoId}] Generando PDF...`);
 
         // Step 4: Generate single PDF buffer (shared for email + archive)
-        const { pdf: pdfBuffer, logo: logoBuffer } = await generarPDFBuffer(cliente, productos, total, correlativo, vendedor, hora || new Date().toLocaleString('es-VE'), notaCorreo || '');
+        const { pdf: pdfBuffer, logo: logoBuffer } = await generarPDFBuffer(cliente, productos, total, correlativo, vendedor, hora || new Date().toLocaleString('es-VE', { timeZone: 'America/Caracas' }), notaCorreo || '');
 
         // Step 5: Send emails (Only internal CCs, client email handled by WooCommerce)
         logger.info(`[PedidoWorker] [${pedidoId}] Enviando emails...`);
