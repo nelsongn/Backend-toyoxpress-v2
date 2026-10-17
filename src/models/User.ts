@@ -22,6 +22,7 @@ export interface IUser extends Document {
         verClientes: boolean;
         verExcel: boolean;
         verPedidos: boolean;
+        verProductos: boolean;
         [key: string]: boolean;
     };
 }
@@ -48,6 +49,7 @@ const UserSchema: Schema = new Schema({
         verClientes: { type: Boolean, default: false },
         verExcel: { type: Boolean, default: false },
         cargarProductos: { type: Boolean, default: false },
+        verProductos: { type: Boolean, default: false },
         verPedidos: { type: Boolean, default: false },
         verCajaChica: { type: Boolean, default: false },
         verSaldoTotal: { type: Boolean, default: false },
