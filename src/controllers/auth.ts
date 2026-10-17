@@ -54,6 +54,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
                 verClientes: true,
                 verExcel: true,
                 cargarProductos: true,
+                verProductos: true,
                 verPedidos: true,
                 verCajaChica: true,
                 verSaldoTotal: true
