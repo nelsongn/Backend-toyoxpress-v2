@@ -5,6 +5,8 @@ import { Cliente } from '../models/Cliente';
 import { Producto } from '../models/Producto';
 import { Cuenta } from '../models/Cuenta';
 import User from '../models/User';
+import { SyncJob } from '../models/SyncJob';
+import { fechaCaracas, inicioDiaCaracas, finDiaCaracas } from '../utils/fechas';
 
 export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -21,11 +23,11 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         const puedeVerPedidos = esAdminGlobal || !!user.permissions?.verPedidos;
 
         // 1. Resumen Financiero de Hoy
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0); // Inicio del día local del servidor
+        // "Hoy" es el día en Caracas, no en el servidor (Railway corre en UTC)
+        const hoy = fechaCaracas();
 
         let movimientosQuery: any = { 
-            fecha: { $gte: hoy },
+            fecha: { $gte: inicioDiaCaracas(hoy), $lte: finDiaCaracas(hoy) },
             disabled: { $ne: true },
             vale: { $exists: true, $nin: ["", null] }
         };
@@ -146,8 +148,10 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
             }));
         }
 
-        // Los movimientos de hoy, tomamos los ultimos 5 si queremos
-        let ultimosMovimientos = await Movimiento.find(movimientosQuery)
+        // Los últimos 5 movimientos registrados, de cualquier fecha (mismos filtros que la caja
+        // de hoy, sin el filtro del día: aprobados y, si no tiene permisos ampliados, solo los suyos)
+        const { fecha: _soloHoy, ...ultimosQuery } = movimientosQuery;
+        let ultimosMovimientos = await Movimiento.find(ultimosQuery)
             .sort({ createdAt: -1 })
             .limit(5)
             .lean();
@@ -158,6 +162,25 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
             tipo: m.movimiento,
             referencia: m.concepto || m.identificador || 'Sin Detalle'
         }));
+
+        // 5. Estado real de la sincronización (Lambda que lee las colas SQS).
+        // Un pedido que sigue "pendiente"/"procesando" después de 10 min indica que la cola no avanza.
+        const ahora = Date.now();
+        const hace10Min = new Date(ahora - 10 * 60 * 1000);
+        const hace24h = new Date(ahora - 24 * 60 * 60 * 1000);
+
+        const [pedidosAtascados, pedidosConError, ultimoPedidoProcesado, ultimaSync] = await Promise.all([
+            Pedido.countDocuments({ estado: { $in: ['pendiente', 'procesando'] }, creadoEn: { $lt: hace10Min } }),
+            Pedido.countDocuments({ estado: 'error', creadoEn: { $gte: hace24h } }),
+            Pedido.findOne({ estado: 'completado', procesadoEn: { $exists: true } })
+                .sort({ procesadoEn: -1 })
+                .select('procesadoEn')
+                .lean(),
+            SyncJob.findOne()
+                .sort({ updatedAt: -1 })
+                .select('fileName status totalChunks chunksProcessed metrics createdAt updatedAt')
+                .lean(),
+        ]);
 
         res.status(200).json({
             ok: true,
@@ -177,6 +200,24 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
             },
             pendientesAprobar,
             cuentas: desgloseCuentas,
+            sincronizacion: {
+                pedidos: {
+                    atascados: pedidosAtascados,
+                    conError24h: pedidosConError,
+                    ultimoProcesadoEn: ultimoPedidoProcesado?.procesadoEn ?? null,
+                },
+                productos: ultimaSync ? {
+                    archivo: ultimaSync.fileName,
+                    estado: ultimaSync.status,
+                    lotesProcesados: ultimaSync.chunksProcessed,
+                    lotesTotales: ultimaSync.totalChunks,
+                    creados: ultimaSync.metrics?.created ?? 0,
+                    actualizados: ultimaSync.metrics?.updated ?? 0,
+                    fallidos: ultimaSync.metrics?.failed ?? 0,
+                    iniciadaEn: ultimaSync.createdAt,
+                    actualizadaEn: ultimaSync.updatedAt,
+                } : null,
+            },
             recientes: {
                 pedidos: puedeVerPedidos ? ultimosPedidos : [],
                 movimientos: ultimosMovimientos

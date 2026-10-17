@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Movimiento } from '../models/Movimiento';
 import { logger, io } from '../index'; // Import global logger and socket
+import { inicioDiaCaracas, finDiaCaracas } from '../utils/fechas';
 
 export const createMovimiento = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -215,14 +216,14 @@ export const getMovimientos = async (req: Request, res: Response): Promise<void>
         if (req.query.fechaInicio || req.query.fechaCierre) {
             const dateQuery: any = {};
             if (req.query.fechaInicio) {
-                // Parse "YYYY-MM-DD" reliably as Start of Day UTC
-                dateQuery.$gte = new Date(`${req.query.fechaInicio}T00:00:00.000Z`);
+                // "YYYY-MM-DD" como inicio del día en Caracas (aplica a `creado`, que es la hora real)
+                dateQuery.$gte = inicioDiaCaracas(String(req.query.fechaInicio));
             }
 
             let endDate = new Date();
             if (req.query.fechaCierre) {
-                // Parse "YYYY-MM-DD" reliably as End of Day UTC
-                endDate = new Date(`${req.query.fechaCierre}T23:59:59.999Z`);
+                // "YYYY-MM-DD" como fin del día en Caracas
+                endDate = finDiaCaracas(String(req.query.fechaCierre));
             }
             dateQuery.$lte = endDate;
 
